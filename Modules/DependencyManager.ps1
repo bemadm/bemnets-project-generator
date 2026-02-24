@@ -216,31 +216,19 @@ function Install-Dependencies {
     Write-Host "📦 INSTALLING DEPENDENCIES" -ForegroundColor White -BackgroundColor Blue
     Write-Host ("=" * 60) -ForegroundColor Cyan
     
-    # Detect package managers
-    $detected = Detect-PackageManagers -ProjectPath $ProjectPath
+    # Detect package managers by looking for package.json files
+    Write-Host "`n🔍 Scanning for package.json files..." -ForegroundColor Yellow
     
-    if ($detected.Count -eq 0) {
-        Write-Host "❌ No package managers detected in project" -ForegroundColor Red
+    # Find all package.json files but exclude node_modules directories
+    $pkgFiles = Get-ChildItem -Path $ProjectPath -Recurse -Filter "package.json" -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -notmatch "\\node_modules\\" }
+    
+    if ($pkgFiles.Count -eq 0) {
+        Write-Host "❌ No package.json files found (excluding node_modules)" -ForegroundColor Red
         return $false
     }
     
-    # Filter by specified package managers if provided
-    if ($PackageManagers) {
-        $toInstall = @{}
-        foreach ($pm in $PackageManagers) {
-            if ($detected.ContainsKey($pm)) {
-                $toInstall[$pm] = $detected[$pm]
-            } else {
-                Write-Host "⚠ Package manager '$pm' not detected in project" -ForegroundColor Yellow
-            }
-        }
-        $detected = $toInstall
-    }
-    
-    if ($detected.Count -eq 0) {
-        Write-Host "❌ No matching package managers found" -ForegroundColor Red
-        return $false
-    }
+    Write-Host "  Found $($pkgFiles.Count) package.json files to process" -ForegroundColor Green
     
     $results = @{
         Success = @()
@@ -248,90 +236,67 @@ function Install-Dependencies {
         Skipped = @()
     }
     
-    # Install dependencies for each package manager
-    foreach ($pm in $detected.Keys) {
-        $pmInfo = $detected[$pm]
-        $pmConfig = $pmInfo.Config
+    # Process each package.json location
+    foreach ($pkgFile in $pkgFiles) {
+        $fileDir = Split-Path $pkgFile.FullName -Parent
+        $relativeDir = $fileDir.Replace($ProjectPath, "").TrimStart("\")
+        if ([string]::IsNullOrEmpty($relativeDir)) {
+            $relativeDir = "project root"
+        }
         
-        Write-Host "`n📦 Processing $pm..." -ForegroundColor Yellow
+        Write-Host "`n📦 Processing: $relativeDir" -ForegroundColor Cyan
         Write-Host ("-" * 40) -ForegroundColor Gray
         
-        # Show detected files
-        Write-Host "  Detected files:" -ForegroundColor Gray
-        foreach ($file in $pmInfo.Files) {
-            $relativePath = $file.Replace($ProjectPath, "").TrimStart("\")
-            Write-Host "    - $relativePath" -ForegroundColor White
+        # Detect which package manager to use based on lock files
+        $pm = Detect-PackageManagerForDirectory -Directory $fileDir
+        
+        if (-not $pm) {
+            # Default to npm if no lock file found
+            $pm = "npm"
+            Write-Host "  Using default package manager: npm" -ForegroundColor Yellow
         }
         
         # Check if package manager is available
-        if (-not $pmInfo.Available) {
+        $pmAvailable = Test-PackageManagerAvailable -PackageManager $pm
+        if (-not $pmAvailable) {
             Write-Host "  ⚠ $pm is not installed on this system" -ForegroundColor Yellow
-            $results.Skipped += $pm
+            $results.Skipped += "$relativeDir ($pm)"
             continue
         }
         
-        # Install dependencies for each file location
-        foreach ($file in $pmInfo.Files) {
-            $fileDir = Split-Path $file -Parent
-            $relativeDir = $fileDir.Replace($ProjectPath, "").TrimStart("\")
-            if ([string]::IsNullOrEmpty($relativeDir)) {
-                $relativeDir = "root"
+        # Change to the directory
+        Push-Location $fileDir
+        
+        try {
+            # Determine install command
+            $installCmd = Get-InstallCommand -PackageManager $pm -DevDependencies:$DevDependencies -Force:$Force
+            
+            Write-Host "  Running: $installCmd" -ForegroundColor Yellow
+            
+            # Run the install command
+            $output = Invoke-Expression $installCmd 2>&1
+            $exitCode = $LASTEXITCODE
+            
+            if ($exitCode -eq 0) {
+                Write-Host "  ✅ Dependencies installed successfully" -ForegroundColor Green
+                $results.Success += $relativeDir
+            } else {
+                Write-Host "  ❌ Installation failed (exit code: $exitCode)" -ForegroundColor Red
+                
+                # Show only the first few lines of error
+                $errorLines = $output | Select-Object -First 3
+                foreach ($line in $errorLines) {
+                    if ($line -match "error|Error|ERROR") {
+                        Write-Host "     $line" -ForegroundColor Red
+                    }
+                }
+                $results.Failed += $relativeDir
             }
-            
-            Write-Host "`n  Installing in: $relativeDir" -ForegroundColor Cyan
-            
-            # Change to the directory containing the dependency file
-            Push-Location $fileDir
-            
-            try {
-                # Determine install command
-                $installCmd = $pmConfig.InstallCommand
-                
-                # Add force flag if requested
-                if ($Force) {
-                    switch ($pm) {
-                        "npm" { $installCmd = "npm install --force" }
-                        "yarn" { $installCmd = "yarn install --force" }
-                        "pip" { $installCmd = "pip install --force-reinstall -r requirements.txt" }
-                    }
-                }
-                
-                Write-Host "  Running: $installCmd" -ForegroundColor Yellow
-                
-                # Run the install command
-                $output = Invoke-Expression $installCmd 2>&1
-                $exitCode = $LASTEXITCODE
-                
-                if ($exitCode -eq 0) {
-                    Write-Host "  ✅ Dependencies installed successfully in $relativeDir" -ForegroundColor Green
-                    
-                    # Show what was installed
-                    if ($pm -eq "npm" -and (Test-Path "node_modules")) {
-                        $moduleCount = (Get-ChildItem "node_modules" -Directory -ErrorAction SilentlyContinue).Count
-                        Write-Host "    Installed $moduleCount modules" -ForegroundColor Gray
-                    }
-                    
-                    if ($results.Success -notcontains $pm) {
-                        $results.Success += $pm
-                    }
-                } else {
-                    Write-Host "  ❌ Installation failed in $relativeDir (exit code: $exitCode)" -ForegroundColor Red
-                    Write-Host "  Error output:" -ForegroundColor Yellow
-                    $output | Select-Object -First 5 | ForEach-Object { Write-Host "    $_" -ForegroundColor Red }
-                    
-                    if ($results.Failed -notcontains $pm) {
-                        $results.Failed += $pm
-                    }
-                }
-            } catch {
-                # Fixed: Using -f operator instead of variable interpolation with colon
-                Write-Host ("  ❌ Error in {0}: {1}" -f $relativeDir, $_) -ForegroundColor Red
-                if ($results.Failed -notcontains $pm) {
-                    $results.Failed += $pm
-                }
-            } finally {
-                Pop-Location
-            }
+        } catch {
+            Write-Host "  ❌ Error: $_" -ForegroundColor Red
+            $results.Failed += $relativeDir
+        } finally {
+            Pop-Location
         }
     }
     
@@ -341,16 +306,98 @@ function Install-Dependencies {
     Write-Host ("=" * 60) -ForegroundColor Cyan
     
     if ($results.Success.Count -gt 0) {
-        Write-Host "✅ Successful: $($results.Success -join ', ')" -ForegroundColor Green
+        Write-Host "✅ Successful installations:" -ForegroundColor Green
+        foreach ($item in $results.Success) {
+            Write-Host "   - $item" -ForegroundColor White
+        }
     }
+    
     if ($results.Skipped.Count -gt 0) {
-        Write-Host "⚠ Skipped (not installed): $($results.Skipped -join ', ')" -ForegroundColor Yellow
+        Write-Host "`n⚠ Skipped (package manager not installed):" -ForegroundColor Yellow
+        foreach ($item in $results.Skipped) {
+            Write-Host "   - $item" -ForegroundColor Gray
+        }
     }
+    
     if ($results.Failed.Count -gt 0) {
-        Write-Host "❌ Failed: $($results.Failed -join ', ')" -ForegroundColor Red
+        Write-Host "`n❌ Failed installations:" -ForegroundColor Red
+        foreach ($item in $results.Failed) {
+            Write-Host "   - $item" -ForegroundColor Yellow
+        }
     }
     
     return $results
+}
+
+function Detect-PackageManagerForDirectory {
+    <#
+    .SYNOPSIS
+        Detects which package manager to use based on lock files
+    #>
+    param([string]$Directory)
+    
+    Push-Location $Directory
+    
+    $pm = $null
+    
+    if (Test-Path "yarn.lock") {
+        $pm = "yarn"
+        Write-Host "  Detected yarn.lock - using yarn" -ForegroundColor Green
+    }
+    elseif (Test-Path "package-lock.json") {
+        $pm = "npm"
+        Write-Host "  Detected package-lock.json - using npm" -ForegroundColor Green
+    }
+    elseif (Test-Path "pnpm-lock.yaml") {
+        $pm = "pnpm"
+        Write-Host "  Detected pnpm-lock.yaml - using pnpm" -ForegroundColor Green
+    }
+    
+    Pop-Location
+    return $pm
+}
+
+function Test-PackageManagerAvailable {
+    <#
+    .SYNOPSIS
+        Checks if a package manager is installed
+    #>
+    param([string]$PackageManager)
+    
+    $cmd = Get-Command $PackageManager -ErrorAction SilentlyContinue
+    return ($null -ne $cmd)
+}
+
+function Get-InstallCommand {
+    <#
+    .SYNOPSIS
+        Gets the appropriate install command for a package manager
+    #>
+    param(
+        [string]$PackageManager,
+        [switch]$DevDependencies,
+        [switch]$Force
+    )
+    
+    switch ($PackageManager) {
+        "npm" {
+            $cmd = "npm install"
+            if ($Force) { $cmd += " --force" }
+        }
+        "yarn" {
+            $cmd = "yarn install"
+            if ($Force) { $cmd += " --force" }
+        }
+        "pnpm" {
+            $cmd = "pnpm install"
+            if ($Force) { $cmd += " --force" }
+        }
+        default {
+            $cmd = "npm install"
+        }
+    }
+    
+    return $cmd
 }
 function Get-DependencyInfo {
     <#
