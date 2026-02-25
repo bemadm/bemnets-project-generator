@@ -12,7 +12,8 @@ param(
     [string]$RepoName = "project-generator",
     [switch]$ResetPath,
     [switch]$PrivateRepo,
-    [switch]$Force
+    [switch]$Force,
+    [switch]$DryRun
 )
 
 # Get script directory
@@ -22,6 +23,13 @@ if ([string]::IsNullOrEmpty($scriptDir)) {
 }
 if ([string]::IsNullOrEmpty($scriptDir)) {
     $scriptDir = (Get-Location).Path
+}
+
+# Import Logger first
+$loggerPath = Join-Path $scriptDir "Modules" "Logger.ps1"
+if (Test-Path $loggerPath) {
+    . $loggerPath
+    Initialize-Logger -DryRun:$DryRun
 }
 
 Write-Host "📂 Script Directory: $scriptDir" -ForegroundColor Cyan

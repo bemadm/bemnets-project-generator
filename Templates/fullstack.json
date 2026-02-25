@@ -1,0 +1,46 @@
+{
+  "name": "fullstack",
+  "description": "Full-stack JavaScript application",
+  "version": "1.0.0",
+  "structure": {
+    "client": {
+      "public": {},
+      "src": {
+        "components": {},
+        "pages": {},
+        "styles": {}
+      },
+      "package.json": "template-content"
+    },
+    "server": {
+      "src": {
+        "controllers": {},
+        "models": {},
+        "routes": {},
+        "middleware": {}
+      },
+      "package.json": "template-content"
+    },
+    "docker-compose.yml": "template-content",
+    ".env.example": "template-content"
+  },
+  "files": {
+    "client/package.json": "{\n  \"name\": \"{{projectName}}-client\",\n  \"version\": \"1.0.0\",\n  \"dependencies\": {\n    \"react\": \"^18.2.0\",\n    \"react-dom\": \"^18.2.0\",\n    \"axios\": \"^1.4.0\"\n  },\n  \"scripts\": {\n    \"start\": \"react-scripts start\",\n    \"build\": \"react-scripts build\"\n  }\n}",
+    "server/package.json": "{\n  \"name\": \"{{projectName}}-server\",\n  \"version\": \"1.0.0\",\n  \"dependencies\": {\n    \"express\": \"^4.18.2\",\n    \"cors\": \"^2.8.5\",\n    \"dotenv\": \"^16.0.3\"\n  },\n  \"scripts\": {\n    \"start\": \"node src/index.js\",\n    \"dev\": \"nodemon src/index.js\"\n  }\n}",
+    "docker-compose.yml": "version: '3.8'\nservices:\n  client:\n    build: ./client\n    ports:\n      - \"3000:3000\"\n  server:\n    build: ./server\n    ports:\n      - \"5000:5000\"\n    environment:\n      - NODE_ENV=development",
+    ".env.example": "PORT=5000\nCLIENT_URL=http://localhost:3000\nDATABASE_URL=mongodb://localhost:27017/{{projectName}}"
+  },
+  "dependencies": {
+    "client": [
+      "react",
+      "react-dom",
+      "axios"
+    ],
+    "server": [
+      "express",
+      "cors",
+      "dotenv",
+      "nodemon"
+    ]
+  }
+}

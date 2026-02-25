@@ -28,31 +28,36 @@ function Test-GitHubCLIInstalled {
 function Initialize-GitRepository {
     param([string]$RepoPath)
     
+    if (Get-DryRunMode) {
+        Write-Log "DRY RUN: Would initialize Git repository in $RepoPath" -Level "DRYRUN"
+        return
+    }
+    
     Push-Location $RepoPath
     
     if (-not (Test-Path ".git")) {
-        Write-Host "Initializing Git repository..." -ForegroundColor Yellow
+        Write-Log "Initializing Git repository..." -Level "INFO"
         git init
         git branch -M main
-        Write-Host "✅ Git repository initialized" -ForegroundColor Green
+        Write-Log "Git repository initialized" -Level "SUCCESS"
     }
     
     # Check if there are any commits yet
     $commitCount = git rev-list --count HEAD 2>$null
     if (-not $commitCount -or $commitCount -eq 0) {
-        Write-Host "Creating initial commit..." -ForegroundColor Yellow
+        Write-Log "Creating initial commit..." -Level "INFO"
         git add .
         git commit -m "Initial commit: $(Split-Path $RepoPath -Leaf) structure"
-        Write-Host "✅ Initial commit created" -ForegroundColor Green
+        Write-Log "Initial commit created" -Level "SUCCESS"
     } else {
-        Write-Host "Git repository already has commits. Adding any new files..." -ForegroundColor Yellow
+        Write-Log "Git repository already has commits. Adding any new files..." -Level "INFO"
         git add .
         $status = git status --porcelain
         if ($status) {
             git commit -m "Update: $(Split-Path $RepoPath -Leaf) structure"
-            Write-Host "✅ Changes committed" -ForegroundColor Green
+            Write-Log "Changes committed" -Level "SUCCESS"
         } else {
-            Write-Host "No changes to commit" -ForegroundColor Yellow
+            Write-Log "No changes to commit" -Level "INFO"
         }
     }
     
@@ -99,49 +104,40 @@ function New-GitHubRepo {
         [string]$RepoPath,
         [string]$Name,
         [string]$Description = "Project Generator Tool",
-        [switch]$Private
+        [bool]$Private = $false
     )
     
-    Write-Host "`n📦 Setting up GitHub repository: $Name..." -ForegroundColor Cyan
+    if (Get-DryRunMode) {
+        $privacy = if ($Private) { "PRIVATE" } else { "PUBLIC" }
+        Write-Log "DRY RUN: Would create $privacy GitHub repository: $Name" -Level "DRYRUN"
+        return $true
+    }
     
-    # Prerequisite checks
-    if (-not (Test-GitInstalled)) { return $false }
-    if (-not (Test-GitHubCLIInstalled)) { return $false }
+    $privacyFlag = if ($Private) { "--private" } else { "--public" }
     
-    Push-Location $RepoPath
+    Write-Log "Creating GitHub repository: $Name ($privacyFlag)..." -Level "INFO"
     
-    # Initialize git if needed
-    Initialize-GitRepository -RepoPath $RepoPath
-    
-    # Check authentication
-    Ensure-GitHubAuth
-    
-    # Handle existing remote
-    $canContinue = Remove-GitRemote -RepoPath $RepoPath
-    if (-not $canContinue) {
-        Pop-Location
+    # Check if gh CLI is available
+    if (-not (Test-GitHubCLIInstalled)) {
         return $false
     }
     
-    # Create repository on GitHub
-    Write-Host "Creating repository: $Name on GitHub..." -ForegroundColor Cyan
-    $privacyFlag = if ($Private) { "--private" } else { "--public" }
+    Ensure-GitHubAuth
     
-    Write-Host "Running: gh repo create $Name $privacyFlag --description \"$Description\" --source=. --remote=origin --push" -ForegroundColor Gray
-    $result = gh repo create $Name $privacyFlag --description "$Description" --source=. --remote=origin --push 2>&1
+    $success = Remove-GitRemote -RepoPath $RepoPath
+    if (-not $success) {
+        return $false
+    }
     
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "✅ Repository created and code pushed successfully!" -ForegroundColor Green
-        
-        $username = gh api user --jq .login 2>$null
-        if ($username) {
-            Write-Host "🔗 Repository URL: https://github.com/$username/$Name" -ForegroundColor Cyan
-        }
-        
+    Push-Location $RepoPath
+    
+    try {
+        gh repo create $Name $privacyFlag --description "$Description" --source=. --remote=origin --push -y
+        Write-Log "GitHub repository created and code pushed successfully!" -Level "SUCCESS"
         Pop-Location
         return $true
-    } else {
-        Write-Host "❌ Failed to create repository: $result" -ForegroundColor Red
+    } catch {
+        Write-Log "Failed to create GitHub repository: $_" -Level "ERROR"
         Pop-Location
         return $false
     }

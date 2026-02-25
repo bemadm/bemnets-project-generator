@@ -56,14 +56,19 @@ function Backup-ExistingFolder {
     $folderName = Split-Path $FolderPath -Leaf
     $backupPath = Join-Path (Split-Path $FolderPath -Parent) "${folderName}_backup_$timestamp"
     
-    Write-Host "⚠ The folder '$FolderPath' already exists. Creating backup: $backupPath" -ForegroundColor Yellow
+    Write-Log "The folder '$FolderPath' already exists. Creating backup: $backupPath" -Level "WARNING"
+    
+    if (Get-DryRunMode) {
+        Write-Log "DRY RUN: Would backup $FolderPath to $backupPath" -Level "DRYRUN"
+        return $true
+    }
     
     try {
         Rename-Item -Path $FolderPath -NewName "${folderName}_backup_$timestamp" -ErrorAction Stop
-        Write-Host "✅ Backup created: $backupPath" -ForegroundColor Green
+        Write-Log "Backup created: $backupPath" -Level "SUCCESS"
         return $true
     } catch {
-        Write-Host "Failed to create backup: $_" -ForegroundColor Red
+        Write-Log "Failed to create backup: $_" -Level "ERROR"
         $response = Read-Host "Do you want to overwrite existing folder? [Y/N]"
         if ($response -match "^[Yy]$") {
             # Remove existing folder
@@ -80,18 +85,26 @@ function New-DirectoryStructure {
         [array]$Directories
     )
     
-    Write-Host "`nCreating directories:" -ForegroundColor Cyan
+    Write-Log "Creating directories..." -Level "INFO"
     $results = @{ Success = 0; Fail = 0; Items = @() }
     
     foreach ($dir in $Directories) {
         $fullPath = Join-Path -Path $RootPath -ChildPath $dir
+        
+        if (Get-DryRunMode) {
+            Write-Log "DRY RUN: Would create directory: $dir" -Level "DRYRUN"
+            $results.Success++
+            $results.Items += $dir
+            continue
+        }
+        
         try {
             New-Item -ItemType Directory -Path $fullPath -Force -ErrorAction Stop | Out-Null
-            Write-Host "  ✅ Created: $dir" -ForegroundColor Green
+            Write-Log "Created: $dir" -Level "SUCCESS"
             $results.Success++
             $results.Items += $dir
         } catch {
-            Write-Host "  ❌ Failed: $dir - $_" -ForegroundColor Red
+            Write-Log "Failed: $dir - $_" -Level "ERROR"
             $results.Fail++
         }
     }
