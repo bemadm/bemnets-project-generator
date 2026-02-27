@@ -1,0 +1,14 @@
+services:
+  synthesis-engine:
+    build: .
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:5173/api
+      - VITE_GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - VITE_GITHUB_REDIRECT_URI=${GITHUB_REDIRECT_URI}
+      - PROJECTS_ROOT=/app/projects
+    volumes:
+      - ./projects:/app/projects
+      - ./generator.log:/app/generator.log
+    restart: unless-stopped

@@ -1,0 +1,27 @@
+{
+  "name": "mobile",
+  "description": "React Native mobile application",
+  "version": "1.0.0",
+  "structure": {
+    "src": {
+      "components": {},
+      "screens": {},
+      "navigation": {},
+      "services": {},
+      "utils": {}
+    },
+    "android": {},
+    "ios": {}
+  },
+  "files": {
+    "package.json": "{\n  \"name\": \"{{projectName}}\",\n  \"version\": \"1.0.0\",\n  \"dependencies\": {\n    \"react-native\": \"^0.72.0\",\n    \"@react-navigation/native\": \"^6.1.6\",\n    \"@react-navigation/stack\": \"^6.3.16\"\n  }\n}",
+    "App.js": "import React from 'react';\nimport { NavigationContainer } from '@react-navigation/native';\nimport { createStackNavigator } from '@react-navigation/stack';\n\nconst Stack = createStackNavigator();\n\nexport default function App() {\n  return (\n    <NavigationContainer>\n      <Stack.Navigator>\n        {/* Add your screens here */}\n      </Stack.Navigator>\n    </NavigationContainer>\n  );\n}"
+  },
+  "dependencies": {
+    "default": [
+      "react-native",
+      "@react-navigation/native",
+      "@react-navigation/stack"
+    ]
+  }
+}

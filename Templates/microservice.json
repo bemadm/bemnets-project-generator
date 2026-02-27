@@ -1,0 +1,33 @@
+{
+  "name": "microservice",
+  "description": "Microservice architecture",
+  "version": "1.0.0",
+  "structure": {
+    "services": {
+      "auth-service": {
+        "src": {},
+        "Dockerfile": "template-content"
+      },
+      "user-service": {
+        "src": {},
+        "Dockerfile": "template-content"
+      },
+      "api-gateway": {
+        "src": {},
+        "Dockerfile": "template-content"
+      }
+    },
+    "kubernetes": {},
+    "scripts": {}
+  },
+  "files": {
+    "docker-compose.yml": "version: '3.8'\nservices:\n  api-gateway:\n    build: ./services/api-gateway\n    ports:\n      - \"3000:3000\"\n  auth-service:\n    build: ./services/auth-service\n    ports:\n      - \"3001:3001\"\n  user-service:\n    build: ./services/user-service\n    ports:\n      - \"3002:3002\""
+  },
+  "dependencies": {
+    "common": [
+      "express",
+      "dotenv",
+      "winston"
+    ]
+  }
+}

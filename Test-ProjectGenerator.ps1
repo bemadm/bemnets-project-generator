@@ -1,17 +1,17 @@
 <#
 .SYNOPSIS
-    Comprehensive test script for Project Generator
+    Comprehensive test script for Enum PROJECT SYNTHESIS ENGINE
 .DESCRIPTION
     Tests all modules, checks system requirements, and displays status
 #>
 
-$version = "1.0.0"
+$version = "2.1.0"
 
 # Clear screen for better readability
 Clear-Host
 
 Write-Host ("=" * 60) -ForegroundColor Cyan
-Write-Host "PROJECT GENERATOR TEST SUITE v$version" -ForegroundColor White -BackgroundColor Blue
+Write-Host "ENUM PROJECT SYNTHESIS ENGINE TEST SUITE v$version" -ForegroundColor White -BackgroundColor Blue
 Write-Host ("=" * 60) -ForegroundColor Cyan
 
 Write-Host "`n📋 System Information:" -ForegroundColor Yellow
@@ -65,7 +65,7 @@ Write-Host ("-" * 40) -ForegroundColor Gray
 Write-Host "Results: $success loaded, $failed failed" -ForegroundColor Cyan
 
 if ($failed -eq 0) {
-    Write-Host "`n✅ ALL SYSTEMS GO! Run: .\Create-ProjectGenerator.ps1" -ForegroundColor Green
+    Write-Host "`n✅ SYNTHESIS ENGINE READY! Run: .\Create-ProjectGenerator.ps1" -ForegroundColor Green
     
     # Check for required tools
     Write-Host "`n🔧 Optional Tools Check:" -ForegroundColor Yellow

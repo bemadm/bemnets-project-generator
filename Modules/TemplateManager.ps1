@@ -7,181 +7,26 @@
 
 # Template storage location
 $script:templateRoot = Join-Path $env:USERPROFILE ".project-generator-templates"
+$script:internalTemplatesDir = Join-Path $PSScriptRoot "..\" "Templates"
 
-# Default templates
-$script:defaultTemplates = @{
-    "fullstack" = @{
-        Description = "Full-stack JavaScript application"
-        Structure = @{
-            "client" = @{
-                "public" = @{}
-                "src" = @{
-                    "components" = @{}
-                    "pages" = @{}
-                    "styles" = @{}
-                }
-                "package.json" = "template-content"
-            }
-            "server" = @{
-                "src" = @{
-                    "controllers" = @{}
-                    "models" = @{}
-                    "routes" = @{}
-                    "middleware" = @{}
-                }
-                "package.json" = "template-content"
-            }
-            "docker-compose.yml" = "template-content"
-            ".env.example" = "template-content"
-        }
-        Files = @{
-            "client/package.json" = @"
-{
-  "name": "{{projectName}}-client",
-  "version": "1.0.0",
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "axios": "^1.4.0"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build"
-  }
-}
-"@
-            "server/package.json" = @"
-{
-  "name": "{{projectName}}-server",
-  "version": "1.0.0",
-  "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "dotenv": "^16.0.3"
-  },
-  "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
-  }
-}
-"@
-            "docker-compose.yml" = @"
-version: '3.8'
-services:
-  client:
-    build: ./client
-    ports:
-      - "3000:3000"
-  server:
-    build: ./server
-    ports:
-      - "5000:5000"
-    environment:
-      - NODE_ENV=development
-"@
-            ".env.example" = @"
-PORT=5000
-CLIENT_URL=http://localhost:3000
-DATABASE_URL=mongodb://localhost:27017/{{projectName}}
-"@
-        }
-        Dependencies = @{
-            "client" = @("react", "react-dom", "axios")
-            "server" = @("express", "cors", "dotenv", "nodemon")
-        }
-    }
-    
-    "mobile" = @{
-        Description = "React Native mobile application"
-        Structure = @{
-            "src" = @{
-                "components" = @{}
-                "screens" = @{}
-                "navigation" = @{}
-                "services" = @{}
-                "utils" = @{}
-            }
-            "android" = @{}
-            "ios" = @{}
-        }
-        Files = @{
-            "package.json" = @"
-{
-  "name": "{{projectName}}",
-  "version": "1.0.0",
-  "dependencies": {
-    "react-native": "^0.72.0",
-    "@react-navigation/native": "^6.1.6",
-    "@react-navigation/stack": "^6.3.16"
-  }
-}
-"@
-            "App.js" = @"
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+# Default templates will be loaded from the Templates directory
+$script:defaultTemplates = @{}
 
-const Stack = createStackNavigator();
-
-export default function App() {
-  return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        {/* Add your screens here */}
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
-}
-"@
-        }
-        Dependencies = @{
-            "default" = @("react-native", "@react-navigation/native", "@react-navigation/stack")
-        }
-    }
-    
-    "microservice" = @{
-        Description = "Microservice architecture"
-        Structure = @{
-            "services" = @{
-                "auth-service" = @{
-                    "src" = @{}
-                    "Dockerfile" = "template-content"
-                }
-                "user-service" = @{
-                    "src" = @{}
-                    "Dockerfile" = "template-content"
-                }
-                "api-gateway" = @{
-                    "src" = @{}
-                    "Dockerfile" = "template-content"
-                }
+function Load-InternalTemplates {
+    if (Test-Path $script:internalTemplatesDir) {
+        Get-ChildItem -Path $script:internalTemplatesDir -Filter "*.json" | ForEach-Object {
+            try {
+                $content = Get-Content $_.FullName | ConvertFrom-Json
+                $script:defaultTemplates[$content.name] = $content
+            } catch {
+                Write-Log "Failed to load template from $($_.Name): $_" -Level "ERROR"
             }
-            "kubernetes" = @{}
-            "scripts" = @{}
-        }
-        Files = @{
-            "docker-compose.yml" = @"
-version: '3.8'
-services:
-  api-gateway:
-    build: ./services/api-gateway
-    ports:
-      - "3000:3000"
-  auth-service:
-    build: ./services/auth-service
-    ports:
-      - "3001:3001"
-  user-service:
-    build: ./services/user-service
-    ports:
-      - "3002:3002"
-"@
-        }
-        Dependencies = @{
-            "common" = @("express", "dotenv", "winston")
         }
     }
 }
+
+# Initial load
+Load-InternalTemplates
 
 function Initialize-TemplateSystem {
     <#
@@ -417,12 +262,11 @@ function Apply-BuiltInTemplateInternal {
         [hashtable]$Variables
     )
     
-    Write-Host "  📦 Using built-in template: $($Template.Name)" -ForegroundColor Green
+    Write-Log "Using built-in template: $($Template.Name)" -Level "INFO"
     
     # Check if template exists in defaultTemplates
     if (-not $script:defaultTemplates.ContainsKey($Template.Name)) {
-        Write-Host "  ❌ Template '$($Template.Name)' not found in defaultTemplates!" -ForegroundColor Red
-        Write-Host "  Available templates: $($script:defaultTemplates.Keys -join ', ')" -ForegroundColor Yellow
+        Write-Log "Template '$($Template.Name)' not found in defaultTemplates!" -Level "ERROR"
         return $false
     }
     
@@ -430,35 +274,43 @@ function Apply-BuiltInTemplateInternal {
     $fileCount = 0
     $dirCount = 0
     
-    Write-Host "  Found template data with $($templateData.Files.Count) files" -ForegroundColor Green
-    
-    # First, create all directories from structure if available
+    # Create all directories from structure if available
     if ($templateData.Structure) {
-        Write-Host "`n  Creating directory structure..." -ForegroundColor Cyan
-        $dirCount = Create-StructureFromDefinition -Structure $templateData.Structure -BasePath $DestinationPath
-        Write-Host "  ✅ Created $dirCount directories" -ForegroundColor Green
+        Write-Log "Creating directory structure..." -Level "INFO"
+        
+        if (Get-DryRunMode) {
+            Write-Log "DRY RUN: Would create directory structure from template definition" -Level "DRYRUN"
+        } else {
+            $dirCount = Create-StructureFromDefinition -Structure $templateData.Structure -BasePath $DestinationPath
+            Write-Log "Created $dirCount directories" -Level "SUCCESS"
+        }
     }
     
     # Create all files
-    Write-Host "`n  Creating files..." -ForegroundColor Cyan
+    Write-Log "Creating files..." -Level "INFO"
     foreach ($file in $templateData.Files.Keys) {
         $filePath = Join-Path $DestinationPath $file
         $fileDir = Split-Path $filePath -Parent
+        
+        if (Get-DryRunMode) {
+            Write-Log "DRY RUN: Would create file: $file" -Level "DRYRUN"
+            $fileCount++
+            continue
+        }
         
         # Create directory for file if it doesn't exist
         if (-not (Test-Path $fileDir) -and $fileDir -ne $DestinationPath) {
             try {
                 New-Item -ItemType Directory -Path $fileDir -Force | Out-Null
-                Write-Host "    📁 Created directory: $(Split-Path $file -Parent)" -ForegroundColor Gray
             } catch {
-                Write-Host "    ❌ Failed to create directory for $file : $_" -ForegroundColor Red
+                Write-Log "Failed to create directory for $file : $_" -Level "ERROR"
                 continue
             }
         }
         
         # Get file content and replace variables
         try {
-            $content = $templateData.Files[$file]
+            $content = $templateData.Files.$file
             
             # Replace all variables in content
             foreach ($var in $Variables.Keys) {
@@ -467,16 +319,20 @@ function Apply-BuiltInTemplateInternal {
             
             # Write file
             $content | Out-File -FilePath $filePath -Encoding UTF8 -Force
-            Write-Host "    ✅ Created: $file" -ForegroundColor Green
+            Write-Log "Created: $file" -Level "SUCCESS"
             $fileCount++
         } catch {
-            Write-Host "    ❌ Failed to create $file : $_" -ForegroundColor Red
+            Write-Log "Failed to create $file : $_" -Level "ERROR"
         }
     }
     
-    # Create any missing directories from file paths
-    Write-Host "`n  📊 Summary: $fileCount files, $dirCount directories created" -ForegroundColor Cyan
-    Write-Host "  ✅ Template applied successfully!" -ForegroundColor Green
+    if (Get-DryRunMode) {
+        Write-Log "DRY RUN Summary: Would create $fileCount files" -Level "DRYRUN"
+    } else {
+        Write-Log "Summary: $fileCount files, $dirCount directories created" -Level "INFO"
+    }
+    
+    Write-Log "Template applied successfully!" -Level "SUCCESS"
     return $true
 }
 

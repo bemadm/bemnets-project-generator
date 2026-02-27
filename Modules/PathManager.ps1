@@ -28,23 +28,55 @@ function Show-FolderBrowser {
         [string]$InitialPath = ""
     )
     
-    try {
-        Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
-        
-        $folderBrowser = New-Object System.Windows.Forms.FolderBrowserDialog
-        $folderBrowser.Description = $Description
-        $folderBrowser.ShowNewFolderButton = $false
-        $folderBrowser.RootFolder = [System.Environment+SpecialFolder]::MyComputer
-        
-        if ($InitialPath -and (Test-Path $InitialPath)) {
-            $folderBrowser.SelectedPath = $InitialPath
+    # Check if running on Windows and if GUI is available
+    if ($IsWindows -and (Get-Command "Add-Type" -ErrorAction SilentlyContinue)) {
+        try {
+            Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
+            
+            $folderBrowser = New-Object System.Windows.Forms.FolderBrowserDialog
+            $folderBrowser.Description = $Description
+            $folderBrowser.ShowNewFolderButton = $false
+            $folderBrowser.RootFolder = [System.Environment+SpecialFolder]::MyComputer
+            
+            if ($InitialPath -and (Test-Path $InitialPath)) {
+                $folderBrowser.SelectedPath = $InitialPath
+            }
+            
+            if ($folderBrowser.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+                return $folderBrowser.SelectedPath
+            }
+        } catch {
+            Write-Host "⚠ Folder browser error: $_" -ForegroundColor Yellow
         }
-        
-        if ($folderBrowser.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-            return $folderBrowser.SelectedPath
+    }
+    
+    # Fallback for macOS/Linux or if Windows GUI fails
+    Write-Host "`n📁 Cross-Platform Path Selection" -ForegroundColor Cyan
+    Write-Host "Description: $Description" -ForegroundColor White
+    if ($InitialPath) { Write-Host "Initial suggestion: $InitialPath" -ForegroundColor Gray }
+    
+    $path = Read-Host "Please enter the absolute path for your project"
+    
+    if (-not $path) {
+        Write-Host "❌ No path provided." -ForegroundColor Red
+        return $null
+    }
+    
+    # Clean the path (remove quotes if user pasted it)
+    $path = $path.Trim('"').Trim("'")
+    
+    if (Test-Path $path) {
+        return (Get-Item $path).FullName
+    } else {
+        $create = Read-Host "Path does not exist. Create it? [Y/N]"
+        if ($create -match "^[Yy]$") {
+            try {
+                New-Item -ItemType Directory -Path $path -Force | Out-Null
+                return (Get-Item $path).FullName
+            } catch {
+                Write-Host "❌ Could not create path: $_" -ForegroundColor Red
+            }
         }
-    } catch {
-        Write-Host "⚠ Folder browser error: $_" -ForegroundColor Yellow
     }
     
     return $null
