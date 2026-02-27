@@ -26,6 +26,21 @@ enum-project-synthesis-engine/
 
 ## Key Features
 
+
+Automated Structure Synthesis - Creates complex project structures with proper content
+Modular Architecture - Clean separation of concerns with specialized modules
+Advanced Customization - Full control over project parameters and settings
+GitHub Integration - Create public or private repositories automatically
+Path Memory - Remembers your last used synthesis matrix
+Synthesis UI - A revolutionary, modern web-based interface with glass-morphism and 3D visualization
+Backup Protection - Automatically backs up existing folders with timestamps
+Smart File Generation - Creates package.json, README, .gitignore, LICENSE and more
+Dry Run Mode - Preview changes before they are applied with the -DryRun switch
+Detailed Logging - All operations are logged to generator.log for troubleshooting
+External Templates - Easily add new templates by dropping JSON files into the Templates/ folder
+Unit Testing - Robust testing framework using Pester
+
+
 - **Automated Synthesis** - Creates complex project structures from blueprints.
 - **Modular Core** - Clean separation of concerns with specialized backend modules.
 - **Synthesis UI** - Modern glass-morphism interface with 3D visualization.
