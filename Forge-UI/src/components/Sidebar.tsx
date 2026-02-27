@@ -13,7 +13,7 @@ import { FullstackIcon, MobileIcon, MicroserviceIcon } from './Icons.tsx';
 import Input from './DesignSystem/Input.tsx';
 import Toggle from './DesignSystem/Toggle.tsx';
 import Button from './DesignSystem/Button.tsx';
-import { useForgeStore } from '../store/useForgeStore.ts';
+import { useSynthesisStore } from '../store/useSynthesisStore.ts';
 
 const templates = [
   { id: 'fullstack', name: 'Fullstack App', icon: FullstackIcon, color: 'text-primary-bright', desc: 'React + Node.js + MongoDB' },
@@ -38,12 +38,12 @@ const Sidebar: React.FC = () => {
     setDockerEnabled,
     ciEnabled,
     setCiEnabled
-  } = useForgeStore();
+  } = useSynthesisStore();
 
   return (
     <div className="flex flex-col h-full p-6" role="complementary" aria-label="Project Configuration">
       <div className="mb-8">
-        <h2 className="text-xl font-bold mb-1">Forge Project</h2>
+        <h2 className="text-xl font-bold mb-1">Synthesize Project</h2>
         <p className="text-sm text-text-tertiary">Configure your creation workspace</p>
       </div>
 

@@ -58,7 +58,7 @@ const MoodBoard: React.FC<MoodBoardProps> = ({ isOpen, onClose }) => {
             <Palette className="text-primary-accent" size={32} />
             <div>
               <h2 className="text-4xl font-black tracking-tighter">CONCEPT_MOOD_BOARDS</h2>
-              <p className="text-sm text-text-tertiary uppercase tracking-[0.3em]">Select a design direction for the Forge evolution</p>
+              <p className="text-sm text-text-tertiary uppercase tracking-[0.3em]">Select a design direction for the Synthesis evolution</p>
             </div>
           </div>
           <button onClick={onClose} className="p-4 glass rounded-full hover:bg-white/10 transition-colors">

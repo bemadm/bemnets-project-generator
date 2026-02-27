@@ -7,23 +7,23 @@ import {
   Github
 } from 'lucide-react';
 import { PrimaryAppIcon } from './Icons.tsx';
-import { useForgeStore } from '../store/useForgeStore.ts';
+import { useSynthesisStore } from '../store/useSynthesisStore.ts';
 import Button from './DesignSystem/Button.tsx';
 
 const Navbar: React.FC = () => {
-  const { user, logout, addLog } = useForgeStore();
+  const { user, logout, addLog } = useSynthesisStore();
 
   const handleLogin = async () => {
     addLog('Initiating GitHub OAuth PKCE flow...');
     // This would normally redirect to GitHub
     // For demo, we'll simulate a successful login
     setTimeout(() => {
-      useForgeStore.getState().setUser({
+      useSynthesisStore.getState().setUser({
         login: 'BEMNET_ADMIN',
         avatar_url: 'https://github.com/identicons/bemnet.png',
         html_url: 'https://github.com/bemnet'
       });
-      useForgeStore.getState().setGithubToken('ghp_mock_token_12345');
+      useSynthesisStore.getState().setGithubToken('ghp_mock_token_12345');
       addLog('GitHub Authentication Successful.');
     }, 1500);
   };
@@ -40,10 +40,10 @@ const Navbar: React.FC = () => {
           
           <div className="flex flex-col">
             <span className="font-black text-xl tracking-[0.2em] bg-gradient-to-r from-primary-bright via-primary-accent to-primary-bright bg-[length:200%_auto] animate-[shimmer_3s_linear_infinite] bg-clip-text text-transparent leading-none">
-              THE_CREATOR'S_FORGE
+              ENUM_PROJECT_SYNTHESIS_ENGINE
             </span>
             <div className="flex items-center gap-2">
-              <span className="text-[9px] text-text-tertiary uppercase tracking-[0.3em] font-bold">Project Synthesis Engine</span>
+              <span className="text-[9px] text-text-tertiary uppercase tracking-[0.3em] font-bold">Advanced Synthesis Core</span>
               <motion.div 
                 initial={{ width: 0 }}
                 whileHover={{ width: 'auto' }}

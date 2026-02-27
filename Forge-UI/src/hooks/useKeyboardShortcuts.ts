@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForgeStore } from '../store/useForgeStore.ts';
+import { useSynthesisStore } from '../store/useSynthesisStore.ts';
 import { useProjectGeneration } from '../hooks/useProjectGeneration.ts';
 
 export const useKeyboardShortcuts = () => {
@@ -8,7 +8,7 @@ export const useKeyboardShortcuts = () => {
     setIsMoodBoardOpen, 
     resetConfig,
     isGenerating
-  } = useForgeStore();
+  } = useSynthesisStore();
   
   const { generateProject } = useProjectGeneration();
 

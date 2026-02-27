@@ -9,8 +9,8 @@ interface PreviewCanvasProps {
   selectedTemplate: string;
 }
 
-// 3D Core Element: The Forge Crystal
-const ForgeCrystal: React.FC<{ color: string }> = ({ color }) => {
+// 3D Core Element: The Synthesis Core
+const SynthesisCore: React.FC<{ color: string }> = ({ color }) => {
   const meshRef = useRef<THREE.Mesh>(null!);
   
   useFrame((state) => {
@@ -106,7 +106,7 @@ const PreviewCanvas: React.FC<PreviewCanvasProps> = ({ selectedTemplate }) => {
           <spotLight position={[-10, 10, 10]} angle={0.15} penumbra={1} intensity={1} />
           
           <Suspense fallback={null}>
-            <ForgeCrystal color={currentColor} />
+            <SynthesisCore color={currentColor} />
             <Particles color={currentColor} />
             <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
           </Suspense>

@@ -7,7 +7,7 @@ interface User {
   html_url: string;
 }
 
-interface ForgeState {
+interface SynthesisState {
   // Project Config
   projectName: string;
   destinationPath: string;
@@ -48,11 +48,11 @@ interface ForgeState {
   resetConfig: () => void;
 }
 
-export const useForgeStore = create<ForgeState>()(
+export const useSynthesisStore = create<SynthesisState>()(
   persist(
     (set) => ({
       projectName: 'GENESIS-ALPHA',
-      destinationPath: '/root/projects/forge',
+      destinationPath: '/root/projects/synthesis',
       selectedTemplate: 'fullstack',
       gitEnabled: true,
       dockerEnabled: false,
@@ -65,7 +65,7 @@ export const useForgeStore = create<ForgeState>()(
       isGenerating: false,
       isExplorerOpen: false,
       isMoodBoardOpen: false,
-      logs: [`[${new Date().toLocaleTimeString()}] System Ready. Waiting for forge command...`],
+      logs: [`[${new Date().toLocaleTimeString()}] System Ready. Waiting for synthesis command...`],
       
       setProjectName: (projectName) => set({ projectName }),
       setDestinationPath: (destinationPath) => set({ destinationPath }),
@@ -89,7 +89,7 @@ export const useForgeStore = create<ForgeState>()(
       
       resetConfig: () => set({
         projectName: 'GENESIS-ALPHA',
-        destinationPath: '/root/projects/forge',
+        destinationPath: '/root/projects/synthesis',
         selectedTemplate: 'fullstack',
         gitEnabled: true,
         dockerEnabled: false,
@@ -97,7 +97,7 @@ export const useForgeStore = create<ForgeState>()(
       })
     }),
     {
-      name: 'forge-storage',
+      name: 'synthesis-engine-storage',
       partialize: (state) => ({ 
         githubToken: state.githubToken, 
         user: state.user,

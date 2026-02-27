@@ -15,7 +15,7 @@ import Navbar from './components/Navbar.tsx';
 import TemplateExplorer from './components/TemplateExplorer.tsx';
 import MoodBoard from './components/MoodBoards/MoodBoard.tsx';
 import Button from './components/DesignSystem/Button.tsx';
-import { useForgeStore } from './store/useForgeStore.ts';
+import { useSynthesisStore } from './store/useSynthesisStore.ts';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts.ts';
 
 const App: React.FC = () => {
@@ -25,7 +25,7 @@ const App: React.FC = () => {
     setIsExplorerOpen,
     isMoodBoardOpen,
     setIsMoodBoardOpen
-  } = useForgeStore();
+  } = useSynthesisStore();
   
   // Register shortcuts
   useKeyboardShortcuts();
@@ -116,7 +116,7 @@ const App: React.FC = () => {
             <History size={12} /> 
             Sync_Stamp: 2026.02.24.23.42
           </span>
-          <span className="text-primary-bright font-black">FORGE_CORE_v2.0.0</span>
+          <span className="text-primary-bright font-black">SYNTHESIS_CORE_v2.0.0</span>
         </div>
       </footer>
 

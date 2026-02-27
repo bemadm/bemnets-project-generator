@@ -17,28 +17,16 @@ export const PrimaryAppIcon = () => (
       transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
       className="absolute inset-1 border-2 border-primary-accent/40 rounded-full blur-[2px]"
     />
-    <svg viewBox="0 0 100 100" className="w-8 h-8 relative z-10 drop-shadow-[0_0_8px_rgba(64,224,208,0.5)]">
-      <defs>
-        <linearGradient id="icon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#2E8B8B" />
-          <stop offset="100%" stopColor="#40E0D0" />
-        </linearGradient>
-      </defs>
-      {/* DNA Helix */}
-      <motion.path 
-        d="M30,20 Q50,50 30,80 M70,20 Q50,50 70,80" 
-        stroke="url(#icon-grad)" 
-        strokeWidth="4" 
-        fill="none"
-        animate={{ strokeDashoffset: [0, 100] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-      />
-      {/* Building Structure */}
-      <rect x="40" y="40" width="20" height="30" fill="url(#icon-grad)" opacity="0.8" />
-      <path d="M40,40 L50,30 L60,40 Z" fill="url(#icon-grad)" />
-      {/* Portal Core */}
-      <circle cx="50" cy="50" r="10" fill="none" stroke="#40E0D0" strokeWidth="2" strokeDasharray="4,2" />
-    </svg>
+    <motion.img 
+      src="/logo.png" 
+      alt="Enum Synthesis Engine Logo"
+      className="w-8 h-8 relative z-10 drop-shadow-[0_0_8px_rgba(64,224,208,0.5)] object-contain"
+      animate={{ 
+        scale: [1, 1.05, 1],
+        filter: ["brightness(1) contrast(1)", "brightness(1.2) contrast(1.1)", "brightness(1) contrast(1)"] 
+      }}
+      transition={pulseTransition}
+    />
   </div>
 );
 

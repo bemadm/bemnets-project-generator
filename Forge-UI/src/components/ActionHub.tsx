@@ -17,11 +17,11 @@ import {
 import { GenerateIcon } from './Icons.tsx';
 import Button from './DesignSystem/Button.tsx';
 import Toggle from './DesignSystem/Toggle.tsx';
-import { useForgeStore } from '../store/useForgeStore.ts';
+import { useSynthesisStore } from '../store/useSynthesisStore.ts';
 import { useProjectGeneration } from '../hooks/useProjectGeneration.ts';
 
 const ActionHub: React.FC = () => {
-  const { isDryRun, setDryRun, isGenerating, logs, clearLogs } = useForgeStore();
+  const { isDryRun, setDryRun, isGenerating, logs, clearLogs } = useSynthesisStore();
   const { generateProject } = useProjectGeneration();
 
   const orbitButtons = [
@@ -190,10 +190,10 @@ const ActionHub: React.FC = () => {
           className={isGenerating 
             ? 'w-full py-6 rounded-3xl bg-status-success shadow-[0_20px_60px_rgba(46,139,139,0.5)]' 
             : 'w-full py-6 rounded-3xl bg-gradient-to-r from-primary-deep via-primary-medium to-primary-bright shadow-[0_20px_50px_rgba(10,42,68,0.4)]'}
-          aria-label={isDryRun ? "Simulate project generation" : "Forge project now"}
+          aria-label={isDryRun ? "Simulate project generation" : "Synthesize project now"}
         >
           {isGenerating ? (
-            <span className="font-black text-xl uppercase tracking-[0.2em] text-white">Forging...</span>
+            <span className="font-black text-xl uppercase tracking-[0.2em] text-white">Synthesizing...</span>
           ) : (
             <div className="flex items-center gap-4">
               <motion.div 
@@ -203,7 +203,7 @@ const ActionHub: React.FC = () => {
                 <GenerateIcon />
               </motion.div>
               <span className="font-black text-xl uppercase tracking-[0.2em] text-white">
-                {isDryRun ? 'Simulate' : 'Forge Project'}
+                {isDryRun ? 'Simulate' : 'Synthesize Project'}
               </span>
               <Rocket size={20} className="text-primary-accent group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
             </div>

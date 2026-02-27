@@ -1,4 +1,4 @@
-import { useForgeStore } from '../store/useForgeStore.ts';
+import { useSynthesisStore } from '../store/useSynthesisStore.ts';
 
 export const useProjectGeneration = () => {
   const { 
@@ -11,7 +11,7 @@ export const useProjectGeneration = () => {
     isDryRun,
     setIsGenerating,
     addLog
-  } = useForgeStore();
+  } = useSynthesisStore();
 
   const generateProject = async () => {
     // Validation
@@ -21,7 +21,7 @@ export const useProjectGeneration = () => {
     }
 
     setIsGenerating(true);
-    addLog(`Starting ${isDryRun ? 'DRY RUN' : 'FORGE'} for ${projectName}...`);
+    addLog(`Starting ${isDryRun ? 'DRY RUN' : 'SYNTHESIS'} for ${projectName}...`);
     
     try {
       // Simulate API call to PowerShell backend
@@ -34,7 +34,7 @@ export const useProjectGeneration = () => {
       if (dockerEnabled) addLog('Docker configuration added.');
       if (ciEnabled) addLog('GitHub Actions workflow generated.');
       
-      addLog(`${isDryRun ? 'DRY RUN' : 'FORGE'} completed successfully at ${destinationPath}`);
+      addLog(`${isDryRun ? 'DRY RUN' : 'SYNTHESIS'} completed successfully at ${destinationPath}`);
       return true;
     } catch (error) {
       addLog(`Critical Error: ${error instanceof Error ? error.message : String(error)}`);
